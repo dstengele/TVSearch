@@ -2,19 +2,42 @@
 
 import argparse
 import requests
-from lxml import etree
+
+try:
+	from lxml import etree
+except ImportError:
+	try:
+		import xml.etree.cElementTree as etree
+	except ImportError:
+		try:
+			import xml.etree.ElementTree as etree
+		except ImportError:
+			try:
+				import cElementTree as etree
+			except ImportError:
+				try:
+					import elementtree.ElementTree as etree
+				except ImportError:
+					exit(1)
 import json
 
-import settings
+try:
+	import settings
+except ImportError:
+	print("<items><item><title>Konfiguriere mich!</title></item></items>")
+	exit()
 
 parser = argparse.ArgumentParser(description='Parse Query from Alfred')
 parser.add_argument('query', nargs='*')
 args = parser.parse_args()
 
 # Build Request
-url = settings.API_ENDPOINT + "secrets/?search=" + " ".join(args.query)
+url = settings.API_ENDPOINT + "secrets/?search=" + "%20".join(args.query)
 
 r = requests.get(url, auth=(settings.USERNAME, settings.PASSWORD))
+if r.status_code != 200:
+	print("<items><item><title>Passwort falsch?</title></item></items>")
+	exit(0)
 searchResults = json.loads(r.content.decode())
 
 # Generate Output XML
